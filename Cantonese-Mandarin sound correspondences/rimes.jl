@@ -5,12 +5,14 @@ using Unicode
 struct PinyinSyllable
    initial::Union{String, Nothing}
    final::String
+   original::String
 end
 
 struct JyutpingSyllable
    initial::Union{String, Nothing}
    final::String
    final_plosive::Union{String, Nothing}
+   original::String
 end
 
 PINYIN_SYLLABIC_FRICATIVES = Set([
@@ -117,7 +119,7 @@ function parse_pinyin(pinyin::AbstractString)
       compose=true)
 
    if syllable in PINYIN_SYLLABIC_FRICATIVES
-      return PinyinSyllable(syllable[1:end-1], "_")
+      return PinyinSyllable(syllable[1:end-1], "_", syllable)
    end
 
    initial_index = findfirst(i -> startswith(syllable, i), PINYIN_INITIALS)
@@ -145,12 +147,11 @@ function parse_pinyin(pinyin::AbstractString)
       error("Invalid pinyin: $pinyin")
    end
 
-   pseudo_initial = if initial === nothing &&
-      ((startswith(final, "y") && !startswith(final, "yu")) || startswith(final, "w"))
-      final[1:1]
+   pseudo_initial = if initial === nothing && (startswith(final, "y") || startswith(final, "w"))
+      final[1:(startswith(final, "yu") ? 2 : 1)]
    end
 
-   PinyinSyllable(default(pseudo_initial, initial), final)
+   PinyinSyllable(default(pseudo_initial, initial), final, syllable)
 end
 
 JYUTPING_SYLLABIC_NASALS = ["m", "ng"]
@@ -241,7 +242,7 @@ function parse_jyutping(jyutping::String)
    syllable = filter(isletter, jyutping |> collect) |> String
    
    if syllable in JYUTPING_SYLLABIC_NASALS
-      return JyutpingSyllable(nothing, syllable, nothing)
+      return JyutpingSyllable(nothing, syllable, nothing, syllable)
    end
 
    initial_index = findfirst(i -> startswith(syllable, i), JYUTPING_INITIALS)
@@ -266,7 +267,7 @@ function parse_jyutping(jyutping::String)
       error("Invalid jyutping: $jyutping")
    end
 
-   JyutpingSyllable(initial, final, final_plosive)
+   JyutpingSyllable(initial, final, final_plosive, syllable)
 end
 
 function syllable_mapping(triples)
@@ -274,4 +275,16 @@ function syllable_mapping(triples)
    syllable_triples = map(monophones) do t
       (t[1], parse_pinyin(t[2] |> only), parse_jyutping(t[3]))
    end
+
+   initial_mapping = Dict()
+   final_mapping = Dict()
+   full_syllable_mapping = Dict()
+
+   for (c, pinyin, jyutping) in syllable_triples
+      push!(get!(get!(full_syllable_mapping, pinyin.original, Dict()), jyutping.original, Set()), c)
+      push!(get!(get!(initial_mapping, pinyin.initial, Dict()), jyutping.initial, Set()), c)
+      push!(get!(get!(final_mapping, pinyin.final, Dict()), jyutping.final, Set()), c)
+   end
+
+   (initial_mapping, final_mapping, full_syllable_mapping)
 end
