@@ -1,4 +1,4 @@
-function draw_tone_mapping_graph(triples)
+function extract_tones(triples)
    # 1. Extract the tones from the romanization
    triples_tones = map(triples) do triple
       pinyin = triple[2]
@@ -15,12 +15,16 @@ function draw_tone_mapping_graph(triples)
    triples_single_tones = filter(triples_tones) do t
       length(t[2]) == 1
    end
-   
+
    mandarin_tone_groups = groupby(t -> t[2] |> only, triples_single_tones)
-   mandarin_tone_counts =
-      OrderedDict(tone => Dict(tone => length(entries)/length(characters)
-         for (tone, entries) in groupby(t -> t[3], characters))
-         for (tone, characters) in mandarin_tone_groups)
+   OrderedDict(tone => Dict(tone => length(entries)/length(characters)
+      for (tone, entries) in groupby(t -> t[3], characters))
+      for (tone, characters) in mandarin_tone_groups)
+end
+
+
+function draw_tone_mapping_graph(triples)
+   mandarin_tone_counts = extract_tones(triples)
    
    tones_matrix = zeros(4, 6)
    

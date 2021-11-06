@@ -5,6 +5,7 @@ using DataFrames
 using PlotlyJS
 
 include("../helpers.jl")
+include("./rimes.jl")
 
 function load_triples()
    # Steps:
@@ -72,3 +73,25 @@ CANTONESE_TONE_LABELS = [
 ]
 
 triples = load_triples()
+
+function save_tone_mapping_to_json(filename)
+   tones = extract_tones(triples)
+   open(filename, "w") do f
+      write(f, json(tones))
+   end
+end
+
+function save_syllable_mapping_to_json(filename_prefix)
+   (initial_mapping, final_mapping, full_syllable_mapping) = syllable_mapping(triples)
+   open("$(filename_prefix)_im.json", "w") do f
+      write(f, json(initial_mapping))
+   end
+
+   open("$(filename_prefix)_fm.json", "w") do f
+      write(f, json(final_mapping))
+   end
+
+   open("$(filename_prefix)_fsm.json", "w") do f
+      write(f, json(full_syllable_mapping))
+   end
+end
