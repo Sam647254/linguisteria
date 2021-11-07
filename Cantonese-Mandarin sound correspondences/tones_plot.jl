@@ -16,10 +16,18 @@ function extract_tones(triples)
       length(t[2]) == 1
    end
 
-   mandarin_tone_groups = groupby(t -> t[2] |> only, triples_single_tones)
+   mandarin_tones = groupby(t -> t[2] |> only, triples_single_tones)
+   mandarin_to_cantonese =
+      OrderedDict(tone => Dict(tone => length(entries)/length(characters)
+         for (tone, entries) in groupby(t -> t[3], characters))
+         for (tone, characters) in mandarin_tones)
+
+   cantonese_tones = groupby(t -> t[3] |> only, triples_single_tones)
+   cantonese_to_mandarin =
    OrderedDict(tone => Dict(tone => length(entries)/length(characters)
-      for (tone, entries) in groupby(t -> t[3], characters))
-      for (tone, characters) in mandarin_tone_groups)
+      for (tone, entries) in groupby(t -> t[2] |> only, characters))
+      for (tone, characters) in cantonese_tones)
+   (mandarin_to_cantonese, cantonese_to_mandarin)
 end
 
 

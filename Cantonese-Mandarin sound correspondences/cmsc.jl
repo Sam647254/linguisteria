@@ -74,10 +74,14 @@ CANTONESE_TONE_LABELS = [
 
 triples = load_triples()
 
-function save_tone_mapping_to_json(filename)
-   tones = extract_tones(triples)
-   open(filename, "w") do f
-      write(f, json(tones))
+function save_tone_mapping_to_json(prefix)
+   (mc, cm) = extract_tones(triples)
+   open("$(prefix)_mc.json", "w") do f
+      write(f, json(mc))
+   end
+
+   open("$(prefix)_cm.json", "w") do f
+      write(f, json(cm))
    end
 end
 
