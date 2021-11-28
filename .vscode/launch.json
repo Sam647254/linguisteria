@@ -1,0 +1,25 @@
+{
+   // Utilisez IntelliSense pour en savoir plus sur les attributs possibles.
+   // Pointez pour afficher la description des attributs existants.
+   // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
+   "version": "0.2.0",
+   "configurations": [
+      {
+         "request": "launch",
+         "name": "Launch Program",
+         "type": "pwa-node",
+         "program": "${workspaceFolder}/Cantonese-Mandarin sound correspondences/main.ts",
+         "cwd": "${workspaceFolder}",
+         "runtimeExecutable": "C:\\ProgramData\\chocolatey\\bin\\deno.EXE",
+         "runtimeArgs": [
+            "run",
+            "--unstable",
+            "--config",
+            "deno.json",
+            "--inspect",
+            "--allow-all"
+         ],
+         "attachSimplePort": 9229
+      }
+   ]
+}
