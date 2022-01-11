@@ -9,50 +9,36 @@ include("./rimes.jl")
 
 function load_triples()
    # Steps:
-   # 1. Parse the file of Simplified Chinese-Pinyin entries
-   ENTRY_REGEX = r"^.*\[\[(.*)\]\]</span>\|\|(.*)$"
+   # 1. Parse the file of Traditional Chinese characters and their Unicode codepoints
+   tc = readlines("$(dirname(@__FILE__))/data/traditional.txt")
+   tchars::Vector{Tuple{AbstractString,AbstractString}} = map(tc) do line
+      _, _, tunicode, tchar = split(line, ' ')
+      (tunicode, tchar)
+   end
 
-   sc = readlines("$(dirname(@__FILE__))/simplified.txt")
+   ENTRY_REGEX = r"^([A-Z0-9]+) \((.*)\)$"
+   pinyin_dict_file = readlines("$(dirname(@__FILE__))/data/unicode_to_hanyu_pinyin.txt")
+   pinyin_dict = map(pinyin_dict_file) do line
+      matches = match(ENTRY_REGEX, line)
+      unicode = matches.captures[1]
+      pinyin = split(matches.captures[2], ',')
 
-   schars = filter(
-      x -> x !== nothing,
-      map(sc) do line
-         matches = match(ENTRY_REGEX, line)
-         if matches === nothing
-            nothing
-         else
-            (matches.captures[1], split(matches.captures[2], ", "))
-         end
-      end
-   )
-
-   # 2. Convert the characters to traditional characters. It is possible that a single Simplified
-   # character maps to multiple traditional characters, in which case the list will grow.
-   s_to_t = readlines("$(dirname(@__FILE__))/STCharacters.txt")
-   st_dict = Dict(
-      map(s_to_t) do line
-         (simplified, traditional) = split(line, '\t')
-         return (simplified, split(traditional, ' '))
-      end
-   )
-
-   tchars = map(schars) do pair
-      traditional = get(st_dict, pair[1], [pair[1]])
-      map(t -> (t, pair[2]), traditional)
-   end |> Iterators.flatten |> collect
+      (unicode, pinyin)
+   end |> Dict
 
    # 3. Read the Jyutping dictionary
-   jp = JSON.parsefile("$(dirname(@__FILE__))/chars_to_jyutping.json")
+   jp = JSON.parsefile("$(dirname(@__FILE__))/data/chars_to_jyutping.json")
 
    # 4. Match the two pronunciations
-   map(tchars) do pair
-      jyutping = jp[pair[1]]
-      (pair[1], pair[2], jyutping)
+   map(tchars) do (tunicode, tchar)
+      pinyin = pinyin_dict[uppercase(tunicode)]
+      jyutping = jp[tchar]
+      (tchar, pinyin, jyutping)
    end
 end
 
 # 5. Map the tones
-CANTONESE_TONE_REGEX = r".*([0-9]).*"
+TONE_REGEX = r".*([0-9]).*"
 MANDARIN_TONES = ['\u0304', '\u0301', '\u030C', '\u0300']
 
 # Plot the tone correspondences

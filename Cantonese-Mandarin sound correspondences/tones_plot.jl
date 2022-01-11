@@ -3,11 +3,8 @@ function extract_tones(triples)
    triples_tones = map(triples) do triple
       pinyin = triple[2]
       jyutping = triple[3]
-      cantonese_tone = parse(Int, match(CANTONESE_TONE_REGEX, jyutping).captures[1])
-      mandarin_tone = map(pinyin) do p
-         normalized = Unicode.normalize(p, decompose=true)
-         findfirst(tone -> contains(normalized, tone), MANDARIN_TONES)
-      end
+      cantonese_tone = parse(Int, match(TONE_REGEX, jyutping).captures[1])
+      mandarin_tone = parse(Int, match(TONE_REGEX, pinyin).captures[1])
       (triple[1], mandarin_tone, cantonese_tone)
    end
    
