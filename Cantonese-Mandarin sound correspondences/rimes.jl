@@ -280,6 +280,8 @@ function parse_jyutping(jyutping::String)
 
    pseudo_initial = if initial === "kw" || initial === "gw"
       initial[1:1]
+   elseif initial === "w" || initial === "j"
+      nothing
    else
       initial
    end
@@ -320,7 +322,7 @@ function syllable_mapping(triples)
    end
 
    Dict(
-      "mc" => (mc_initial_mapping, mc_final_mapping),
-      "cm" => (cm_initial_mapping, cm_final_mapping)
+      "mc" => Dict("initialMapping" => mc_initial_mapping, "finalMapping" => mc_final_mapping),
+      "cm" => Dict("initialMapping" => cm_initial_mapping, "finalMapping" => cm_final_mapping)
    )
 end

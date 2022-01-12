@@ -6,6 +6,7 @@ using PlotlyJS
 
 include("../helpers.jl")
 include("./rimes.jl")
+include("./tones_plot.jl")
 
 function load_triples()
    # Steps:
@@ -58,8 +59,6 @@ CANTONESE_TONE_LABELS = [
    "Low flat (6)"
 ]
 
-triples = load_triples()
-
 function save_tone_mapping_to_json(prefix)
    (mc, cm) = extract_tones(triples)
    open("$(prefix)_mc.json", "w") do f
@@ -83,5 +82,19 @@ function save_syllable_mapping_to_json(filename_prefix)
 
    open("$(filename_prefix)_fsm.json", "w") do f
       write(f, json(full_syllable_mapping))
+   end
+end
+
+function main()
+   triples = load_triples()
+   syllables = syllable_mapping(triples)
+   tones = extract_tones(triples)
+
+   open("$(dirname(@__FILE__))/output/syllables.json", "w") do f
+      write(f, json(syllables))
+   end
+
+   open("$(dirname(@__FILE__))/output/tones.json", "w") do f
+      write(f, json(tones))
    end
 end
