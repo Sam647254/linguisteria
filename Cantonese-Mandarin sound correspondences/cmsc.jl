@@ -98,3 +98,5 @@ function main()
       write(f, json(tones))
    end
 end
+
+main()
