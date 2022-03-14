@@ -1,3 +1,1 @@
-import IO
-puts("Test")
-IO.inspect(CMSC.test)
+triples = CMSC.load_triples()

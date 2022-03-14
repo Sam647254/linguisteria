@@ -1,3 +1,3 @@
 defmodule CMSC.Triple do
-  defstruct character: "", pinyin: "", jyutping: ""
+  defstruct character: "", pinyin: [], jyutping: ""
 end
