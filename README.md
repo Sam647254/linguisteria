@@ -1,4 +1,4 @@
-# Cmsc
+# Linguisteria
 
 **TODO: Add description**
 

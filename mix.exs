@@ -1,9 +1,9 @@
-defmodule CMSC.MixProject do
+defmodule Linguisteria.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :CMSC,
+      app: :linguisteria,
       version: "0.1.0",
       elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
