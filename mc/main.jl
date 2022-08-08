@@ -5,7 +5,7 @@ using DataFrames
 using PlotlyJS
 
 include("../helpers.jl")
-include("./rimes.jl")
+include("./syllables.jl")
 include("./tones_plot.jl")
 
 function load_triples()
@@ -32,8 +32,8 @@ function load_triples()
 
    # 4. Match the two pronunciations
    map(tchars) do (tunicode, tchar)
-      pinyin = pinyin_dict[uppercase(tunicode)]
-      jyutping = jp[tchar]
+      pinyin = map(parse_pinyin, pinyin_dict[uppercase(tunicode)])
+      jyutping = parse_jyutping(jp[tchar])
       (tchar, pinyin, jyutping)
    end
 end
