@@ -1,5 +1,6 @@
 include("../helpers.jl")
 
+using DataStructures
 using Unicode
 
 struct LwomazhSyllable
@@ -416,5 +417,51 @@ function syllable_mapping(triples)
    Dict(
       "mc" => Dict("initialMapping" => mc_initial_mapping, "finalMapping" => mc_final_mapping),
       "cm" => Dict("initialMapping" => cm_initial_mapping, "finalMapping" => cm_final_mapping)
+   )
+end
+
+# Stats calculated:
+# - Least common syllable (including unique ones)
+
+function compute_stats(pairs)
+   mapping = DefaultDict(Set)
+
+   for (syllable, character) in pairs
+      set = mapping[syllable]
+      push!(set, character)
+   end
+   return sort(mapping |> collect, by = p -> length(p[2]))
+end
+
+function syllable_stats(triples)
+   m_no_tones = map(triples) do t
+      (ch, pinyin, _) = t
+      map(pinyin) do p
+         p.full => ch
+      end
+   end |> Iterators.flatten
+   
+   m_tones = map(triples) do t
+      (ch, pinyin, _) = t
+      map(pinyin) do p
+         (p.full, p.tone) => ch
+      end
+   end |> Iterators.flatten
+
+   c_no_tones = map(triples) do t
+      (ch, _, l) = t
+      l.full => ch
+   end
+
+   c_tones = map(triples) do t
+      (ch, _, l) = t
+      (l.full, l.tone) => ch
+   end
+
+   Dict(
+      "m_no_tones" => compute_stats(m_no_tones),
+      "m_tones" => compute_stats(m_tones),
+      "c_no_tones" => compute_stats(c_no_tones),
+      "c_tones" => compute_stats(c_tones),
    )
 end

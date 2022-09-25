@@ -89,6 +89,7 @@ function main()
    triples = load_triples()
    syllables = syllable_mapping(triples)
    tones = extract_tones(triples)
+   stats = syllable_stats(tones)
 
    open("$(dirname(@__FILE__))/output/syllables.json", "w") do f
       write(f, json(syllables))
@@ -96,5 +97,9 @@ function main()
 
    open("$(dirname(@__FILE__))/output/tones.json", "w") do f
       write(f, json(tones))
+   end
+
+   open("$(dirname(@__FILE__))/output/stats.json", "w") do f
+      write(f, json(stats))
    end
 end
