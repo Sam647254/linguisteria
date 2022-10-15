@@ -1,16 +1,14 @@
 function extract_tones(triples)
    # 1. Filter out polyphones
    triples_single_tones = filter(triples) do t
-      length(t[2]) == 1
+      length(t.mandarin) == 1 && length(t.cantonese) == 1
    end
 
    # 2. Extract the tones from the romanization
    triples_tones = map(triples_single_tones) do triple
-      pinyin = triple[2]
-      jyutping = triple[3]
-      cantonese_tone = parse(Int, match(TONE_REGEX, jyutping).captures[1])
-      mandarin_tone = parse(Int, match(TONE_REGEX, pinyin[1]).captures[1])
-      (triple[1], mandarin_tone, cantonese_tone)
+      mandarin = triple.mandarin |> only
+      cantonese = triple.cantonese |> only
+      (triple.character, mandarin.tone, cantonese.tone)
    end
 
    mandarin_tones = groupby(t -> t[2] |> only, triples_tones)

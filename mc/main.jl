@@ -2,41 +2,11 @@ using JSON
 using OrderedCollections
 using Unicode
 using DataFrames
-using PlotlyJS
 
 include("../helpers.jl")
 include("./syllables.jl")
+include("./chars.jl")
 include("./tones_plot.jl")
-
-function load_triples()
-   # Steps:
-   # 1. Parse the file of Traditional Chinese characters and their Unicode codepoints
-   tc = readlines("$(dirname(@__FILE__))/data/traditional.txt")
-   tchars::Vector{Tuple{AbstractString,AbstractString}} = map(tc) do line
-      _, _, tunicode, tchar = split(line, ' ')
-      (tunicode, tchar)
-   end
-
-   ENTRY_REGEX = r"^([A-Z0-9]+) \((.*)\)$"
-   pinyin_dict_file = readlines("$(dirname(@__FILE__))/data/unicode_to_hanyu_pinyin.txt")
-   pinyin_dict = map(pinyin_dict_file) do line
-      matches = match(ENTRY_REGEX, line)
-      unicode = matches.captures[1]
-      pinyin = split(matches.captures[2], ',')
-
-      (unicode, pinyin)
-   end |> Dict
-
-   # 3. Read the Jyutping dictionary
-   jp = JSON.parsefile("$(dirname(@__FILE__))/data/chars_to_jyutping.json")
-
-   # 4. Match the two pronunciations
-   map(tchars) do (tunicode, tchar)
-      pinyin = map(parse_pinyin, pinyin_dict[uppercase(tunicode)])
-      jyutping = parse_jyutping(jp[tchar])
-      (tchar, pinyin, jyutping)
-   end
-end
 
 # 5. Map the tones
 TONE_REGEX = r".*([0-9]).*"
@@ -86,10 +56,10 @@ function save_syllable_mapping_to_json(filename_prefix)
 end
 
 function main()
-   triples = load_triples()
+   triples = load_characters()
    syllables = syllable_mapping(triples)
    tones = extract_tones(triples)
-   stats = syllable_stats(tones)
+   stats = syllable_stats(triples)
 
    open("$(dirname(@__FILE__))/output/syllables.json", "w") do f
       write(f, json(syllables))

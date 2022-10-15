@@ -264,6 +264,7 @@ JYUTPING_FINALS = [
    "eu",
    "em",
    "eng",
+   "et",
    "ep",
    "ek",
    "i",
@@ -274,6 +275,8 @@ JYUTPING_FINALS = [
    "ip",
    "it",
    "ik",
+   "m",
+   "ng",
    "o",
    "oi",
    "ou",
@@ -339,22 +342,24 @@ JYUTPING_FINALS_TO_LOAMAZI = Dict([
    "eot" => "oet",
    "yu" => "eu",
    "yun" => "eun",
-   "yut" => "eut"
+   "yut" => "eut",
+   "m" => "mh",
+   "ng" => "ngh",
 ])
 
-function parse_jyutping(jyutping::String)::LoamaziSyllable
+function parse_jyutping(jyutping::AbstractString)::LoamaziSyllable
    syllable = jyutping[1:end-1]
    tone = parse(Int, jyutping[end:end])
 
    if syllable in JYUTPING_SYLLABIC_NASALS
-      return LoamaziSyllable(syllable, "h", "", syllable * "h", tone)
+      return LoamaziSyllable(syllable, syllable * "h", "", syllable * "h", tone)
    end
 
    initial_index = findfirst(i -> startswith(syllable, i), JYUTPING_INITIALS)
    initial = initial_index === nothing ? "" : JYUTPING_INITIALS[initial_index]
 
    (final, final_plosive) = begin
-      remaining = syllable[length(default(initial, ""))+1:end]
+      remaining = syllable[length(something(initial, ""))+1:end]
       final_plosive = if any(p -> endswith(remaining, p), ["p", "t", "k"])
          remaining[end:end]
       else
@@ -364,7 +369,7 @@ function parse_jyutping(jyutping::String)::LoamaziSyllable
       if remaining in JYUTPING_FINALS
          (remaining[1:end-length(default(final_plosive, ""))], final_plosive)
       else
-         nothing
+         (nothing, nothing)
       end
    end
 
@@ -374,13 +379,13 @@ function parse_jyutping(jyutping::String)::LoamaziSyllable
 
    initial = get(JYUTPING_INITIALS_TO_LOAMAZI, initial, initial)
    initial_full = if initial == "ts/ch"
-      if startswith("eu", final) || startswith("oe", final)
+      if startswith(final, "yu") || startswith(final, "oe")
          "ch"
       else
          "ts"
       end
    elseif initial == "z/j"
-      if startswith("eu", final) || startswith("oe", final)
+      if startswith(final, "yu") || startswith(final, "oe")
          "j"
       else
          "z"
@@ -394,10 +399,10 @@ function parse_jyutping(jyutping::String)::LoamaziSyllable
    LoamaziSyllable(initial, final, final_plosive, initial_full * final * final_plosive, tone)
 end
 
-function syllable_mapping(triples)
-   monophones = filter(t -> length(t[2]) == 1, triples)
+function syllable_mapping(characters)
+   monophones = filter(t -> length(t.mandarin) == 1 && length(t.cantonese) == 1, characters)
    syllable_triples = map(monophones) do t
-      (t[1], parse_pinyin(t[2] |> only), parse_jyutping(t[3]))
+      (t.character, t.mandarin |> only, t.mandarin |> only)
    end
 
    mc_initial_mapping = Dict()
@@ -407,11 +412,11 @@ function syllable_mapping(triples)
    cm_final_mapping = Dict()
 
    for (c, pinyin, jyutping) in syllable_triples
-      push!(get!(get!(mc_initial_mapping, pinyin.pseudo_initial, Dict()), jyutping.initial, Set()), c)
-      push!(get!(get!(mc_final_mapping, pinyin.pseudo_final, Dict()), jyutping.final, Set()), c)
+      push!(get!(get!(mc_initial_mapping, pinyin.initial, Dict()), jyutping.initial, Set()), c)
+      push!(get!(get!(mc_final_mapping, pinyin.final, Dict()), jyutping.final, Set()), c)
 
-      push!(get!(get!(cm_initial_mapping, jyutping.pseudo_initial, Dict()), pinyin.initial, Set()), c)
-      push!(get!(get!(cm_final_mapping, jyutping.pseudo_final, Dict()), pinyin.final, Set()), c)
+      push!(get!(get!(cm_initial_mapping, jyutping.initial, Dict()), pinyin.initial, Set()), c)
+      push!(get!(get!(cm_final_mapping, jyutping.final, Dict()), pinyin.final, Set()), c)
    end
 
    Dict(
@@ -435,28 +440,28 @@ end
 
 function syllable_stats(triples)
    m_no_tones = map(triples) do t
-      (ch, pinyin, _) = t
-      map(pinyin) do p
-         p.full => ch
+      map(t.mandarin) do p
+         p.full => t.character
       end
    end |> Iterators.flatten
    
    m_tones = map(triples) do t
-      (ch, pinyin, _) = t
-      map(pinyin) do p
-         (p.full, p.tone) => ch
+      map(t.mandarin) do p
+         p.full * string(p.tone) => t.character
       end
    end |> Iterators.flatten
 
    c_no_tones = map(triples) do t
-      (ch, _, l) = t
-      l.full => ch
-   end
+      map(t.cantonese) do l
+         l.full => t.character
+      end
+   end |> Iterators.flatten
 
    c_tones = map(triples) do t
-      (ch, _, l) = t
-      (l.full, l.tone) => ch
-   end
+      map(t.cantonese) do l
+         l.full * string(l.tone) => t.character
+      end
+   end |> Iterators.flatten
 
    Dict(
       "m_no_tones" => compute_stats(m_no_tones),
