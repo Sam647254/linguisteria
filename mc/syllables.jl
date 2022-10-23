@@ -5,7 +5,10 @@ using Unicode
 
 struct LwomazhSyllable
    initial::String
+   initial_phoneme::String
+   c_initial::String
    final::String
+   c_final::String
    full::String
    tone::Int
 end
@@ -13,6 +16,7 @@ end
 struct LoamaziSyllable
    initial::String
    final::String
+   m_final::String
    final_plosive::String
    full::String
    tone::Int
@@ -129,6 +133,12 @@ PINYIN_INITIALS_TO_LWOMAZH = Dict([
    "x" => "shy-",
 ])
 
+PINYIN_INITIALS_TO_LWOMAZH_PHONEME = Dict([
+   "j" => "j",
+   "q" => "ch",
+   "x" => "sh",
+])
+
 PINYIN_INITIALS_TO_LWOMAZH_FULL = Dict([
    "zh" => "j",
    "q" => "ch",
@@ -154,11 +164,11 @@ function parse_pinyin(pinyin::AbstractString)::LwomazhSyllable
 
    if haskey(PINYIN_SYLLABIC_FRICATIVES, syllable)
       lwomazh = get(PINYIN_SYLLABIC_FRICATIVES, syllable, syllable)
-      return LwomazhSyllable(lwomazh, "h", lwomazh * "h", tone)
+      return LwomazhSyllable(lwomazh, lwomazh, lwomazh, "h", "h", lwomazh * "h", tone)
    end
 
    if syllable in PINYIN_SYLLABIC_NASALS
-      return LwomazhSyllable("", syllable * "h", syllable * "h", tone)
+      return LwomazhSyllable(syllable, syllable, syllable, syllable * "h", syllable * "h", syllable * "h", tone)
    end
 
    initial_index = findfirst(i -> startswith(syllable, i), PINYIN_INITIALS)
@@ -186,26 +196,25 @@ function parse_pinyin(pinyin::AbstractString)::LwomazhSyllable
       error("Invalid pinyin: $pinyin")
    end
 
-   pseudo_initial = if initial === "" && (startswith(final, "y") || startswith(final, "w"))
-      final[1:1]
-   elseif (initial === "g" || initial === "k") && startswith(final, "w")
-      initial * "w"
-   else
-      initial
-   end
+   lwomazh_initial = get(PINYIN_INITIALS_TO_LWOMAZH, initial, initial)
+   lwomazh_final = get(PINYIN_FINALS_TO_LWOMAZH, final, final)
+   lwomazh_full = get(PINYIN_INITIALS_TO_LWOMAZH_FULL, initial, something(initial, "")) * get(PINYIN_FINALS_TO_LWOMAZH, final, final)
 
-   pseudo_final = if pseudo_initial === "kw" || pseudo_initial === "gw"
-      final[2:end]
-   elseif initial === "" && (startswith(final, "w") || (startswith(final, "y") && !startswith(final, "yu")))
-      final[2:end]
+   (c_initial, c_final) = if (lwomazh_final[1] == 'y' || lwomazh_final[1] == 'w') && isempty(lwomazh_initial)
+      ("($(lwomazh_final[1:1]))", "($(lwomazh_final[2:end]))")
+   elseif startswith(lwomazh_full, "kw") || startswith(lwomazh_full, "gw")
+      ("($(lwomazh_full[1:2]))", "($(lwomazh_final[3:end]))")
    else
-      final
+      (lwomazh_initial, lwomazh_final)
    end
 
    LwomazhSyllable(
-      get(PINYIN_INITIALS_TO_LWOMAZH, initial, initial),
-      get(PINYIN_FINALS_TO_LWOMAZH, final, final),
-      get(PINYIN_INITIALS_TO_LWOMAZH_FULL, initial, something(initial, "")) * get(PINYIN_FINALS_TO_LWOMAZH, final, final),
+      lwomazh_initial,
+      get(PINYIN_INITIALS_TO_LWOMAZH_PHONEME, initial, lwomazh_initial),
+      c_initial,
+      lwomazh_final,
+      c_final,
+      lwomazh_full,
       tone
    )
 end
@@ -352,7 +361,7 @@ function parse_jyutping(jyutping::AbstractString)::LoamaziSyllable
    tone = parse(Int, jyutping[end:end])
 
    if syllable in JYUTPING_SYLLABIC_NASALS
-      return LoamaziSyllable(syllable, syllable * "h", "", syllable * "h", tone)
+      return LoamaziSyllable(syllable, syllable * "h", syllable * "h", "", syllable * "h", tone)
    end
 
    initial_index = findfirst(i -> startswith(syllable, i), JYUTPING_INITIALS)
@@ -396,27 +405,35 @@ function parse_jyutping(jyutping::AbstractString)::LoamaziSyllable
 
    final = get(JYUTPING_FINALS_TO_LOAMAZI, final, final)
 
-   LoamaziSyllable(initial, final, final_plosive, initial_full * final * final_plosive, tone)
+   m_final = if initial == "kw" || initial == "gw"
+      "(kw/gw)" * final
+   elseif initial == "w" || initial == "y"
+      "($initial)$final"
+   else
+      final
+   end
+
+   LoamaziSyllable(initial, final, m_final, final_plosive, initial_full * final * final_plosive, tone)
 end
 
 function syllable_mapping(characters)
    monophones = filter(t -> length(t.mandarin) == 1 && length(t.cantonese) == 1, characters)
    syllable_triples = map(monophones) do t
-      (t.character, t.mandarin |> only, t.mandarin |> only)
+      (t.character, t.mandarin |> only, t.cantonese |> only)
    end
 
-   mc_initial_mapping = Dict()
-   mc_final_mapping = Dict()
+   mc_initial_mapping = DefaultDict(() -> DefaultDict(Set))
+   mc_final_mapping = DefaultDict(() -> DefaultDict(Set))
 
-   cm_initial_mapping = Dict()
-   cm_final_mapping = Dict()
+   cm_initial_mapping = DefaultDict(() -> DefaultDict(Set))
+   cm_final_mapping = DefaultDict(() -> DefaultDict(Set))
 
    for (c, pinyin, jyutping) in syllable_triples
-      push!(get!(get!(mc_initial_mapping, pinyin.initial, Dict()), jyutping.initial, Set()), c)
-      push!(get!(get!(mc_final_mapping, pinyin.final, Dict()), jyutping.final, Set()), c)
+      push!(mc_final_mapping[pinyin.initial][jyutping.initial], c)
+      push!(mc_final_mapping[pinyin.final][jyutping.m_final], c)
 
-      push!(get!(get!(cm_initial_mapping, jyutping.initial, Dict()), pinyin.initial, Set()), c)
-      push!(get!(get!(cm_final_mapping, jyutping.final, Dict()), pinyin.final, Set()), c)
+      push!(cm_initial_mapping[jyutping.initial][pinyin.c_initial], c)
+      push!(cm_final_mapping[jyutping.final][pinyin.c_final], c)
    end
 
    Dict(
