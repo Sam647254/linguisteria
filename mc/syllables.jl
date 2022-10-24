@@ -23,13 +23,13 @@ struct LoamaziSyllable
 end
 
 PINYIN_SYLLABIC_FRICATIVES = Dict([
-   "zi" => "z",
-   "ci" => "tsz",
-   "si" => "sz",
-   "zhi" => "j",
-   "chi" => "c",
-   "shi" => "s",
-   "ri" => "r",
+   "zi" => ("z", "zh", "zh"),
+   "ci" => ("ts", "zh", "tszh"),
+   "si" => ("s", "zh", "szh"),
+   "zhi" => ("j", "rh", "jh"),
+   "chi" => ("ch", "rh", "ch"),
+   "shi" => ("sh", "rh", "sh"),
+   "ri" => ("r", "rh", "rh"),
 ])
 
 PINYIN_SYLLABIC_NASALS = Set(["n", "ng"])
@@ -163,8 +163,8 @@ function parse_pinyin(pinyin::AbstractString)::LwomazhSyllable
    tone = parse(Int, pinyin[end:end])
 
    if haskey(PINYIN_SYLLABIC_FRICATIVES, syllable)
-      lwomazh = get(PINYIN_SYLLABIC_FRICATIVES, syllable, syllable)
-      return LwomazhSyllable(lwomazh, lwomazh, lwomazh, "h", "h", lwomazh * "h", tone)
+      (initial, final, full) = get(PINYIN_SYLLABIC_FRICATIVES, syllable, syllable)
+      return LwomazhSyllable(initial, initial, initial, final, final, full, tone)
    end
 
    if syllable in PINYIN_SYLLABIC_NASALS
@@ -203,7 +203,11 @@ function parse_pinyin(pinyin::AbstractString)::LwomazhSyllable
    (c_initial, c_final) = if (lwomazh_final[1] == 'y' || lwomazh_final[1] == 'w') && isempty(lwomazh_initial)
       ("($(lwomazh_final[1:1]))", "($(lwomazh_final[2:end]))")
    elseif startswith(lwomazh_full, "kw") || startswith(lwomazh_full, "gw")
-      ("($(lwomazh_full[1:2]))", "($(lwomazh_final[3:end]))")
+      ("($(lwomazh_full[1:2]))", "(w)$(lwomazh_final[2:end])")
+   elseif lwomazh_full == "u"
+      ("(w)", "u")
+   elseif lwomazh_full == "i"
+      ("(y)", "i")
    else
       (lwomazh_initial, lwomazh_final)
    end
@@ -429,7 +433,7 @@ function syllable_mapping(characters)
    cm_final_mapping = DefaultDict(() -> DefaultDict(Set))
 
    for (c, pinyin, jyutping) in syllable_triples
-      push!(mc_final_mapping[pinyin.initial][jyutping.initial], c)
+      push!(mc_initial_mapping[pinyin.initial][jyutping.initial], c)
       push!(mc_final_mapping[pinyin.final][jyutping.m_final], c)
 
       push!(cm_initial_mapping[jyutping.initial][pinyin.c_initial], c)
