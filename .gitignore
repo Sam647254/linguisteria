@@ -1,1 +1,13 @@
 **/output/**/*
+dist/*
+target/
+lib_managed/
+src_managed/
+project/project/
+project/target
+.history
+.cache
+.lib/
+.bsp/
+**/.idea/workspace.xml
+**/.idea/tasks.xml
