@@ -81,7 +81,7 @@ object LwomazhSyllable {
       ("u:an", "yuan"),
    )
 
-   private final val PinyinFinals = List(
+   private final val PinyinFinals = Set(
       "e",
       "a",
       "ei",
