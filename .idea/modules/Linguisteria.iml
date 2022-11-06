@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id="root [file:/C:/Users/samofcorinth/Documents/Projects/linguisteria/]" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="SBT" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_19">
+<module external.linked.project.id="root [file:/C:/Users/samwa/Documents/Projects/linguisteria/]" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="SBT" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_18">
     <output url="file://$MODULE_DIR$/../../target/scala-3.2.1/classes" />
     <output-test url="file://$MODULE_DIR$/../../target/scala-3.2.1/test-classes" />
     <exclude-output />
@@ -12,6 +12,13 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="sbt: com.fasterxml.jackson.core:jackson-annotations:2.11.4:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.fasterxml.jackson.core:jackson-core:2.11.4:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.fasterxml.jackson.core:jackson-databind:2.11.4:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.11.4:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.11.4:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.typesafe.play:play-functional_3:2.10.0-RC7:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.typesafe.play:play-json_3:2.10.0-RC7:jar" level="project" />
     <orderEntry type="library" name="sbt: org.scala-lang:scala-library:2.13.10:jar" level="project" />
     <orderEntry type="library" name="sbt: org.scala-lang:scala3-library_3:3.2.1:jar" level="project" />
   </component>
