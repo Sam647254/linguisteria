@@ -1,5 +1,5 @@
 package mrk.blue.linguisteria
-package mc
+package blue.mrk.linguisteria.mc
 
 import play.api.libs.json.{JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsString, Json}
 
@@ -11,13 +11,13 @@ object MC {
    private final val CharRegex = "(\\p{sc=Han})".r
    private final val JyutpingRegex = "([a-z]+[0-9])".r
 
-   def loadCharacters(): Try[Iterator[CharInfo]] =
+   def loadCharacters(): Try[Seq[CharInfo]] =
       for
          tChars <- Using(Source.fromFile("data/traditional.txt")) { file =>
             file.getLines().map { line =>
                val parts = line.split(' ')
                (parts(2), parts(3))
-            }
+            }.toSeq
          }
 
          pinyinDict <- Using(Source.fromFile("data/unicode_to_hanyu_pinyin.txt")) { file =>
@@ -35,11 +35,11 @@ object MC {
 
       yield tChars.map { case (tUnicode, tChar) =>
          val mandarin = pinyinDict(tUnicode.toUpperCase).map(LwomazhSyllable.parse(_).get)
-         val cantonese = jyutping(tChar).map(LoamaziSyllable.parse(_).get)
+         val cantonese = jyutping(tChar).map { jp => LoamaziSyllable.parse(jp).getOrElse { throw IllegalArgumentException(jp) } }
          CharInfo(tChar(0), mandarin, cantonese)
       }
 
-   def syllableMapping(): Unit = ???
+   def syllableMapping(chars: Seq[CharInfo]): Unit = ???
 
    def extractTones(): Unit = ???
 
@@ -48,3 +48,4 @@ object MC {
 
 @main def main(): Unit =
    val chars = MC.loadCharacters().get
+   println(s"Loaded characters: ${chars.length}")

@@ -1,6 +1,5 @@
 package mrk.blue.linguisteria
-package mc
-
+package blue.mrk.linguisteria.mc
 
 case class LwomazhSyllable(
    initial: String,
@@ -14,13 +13,13 @@ case class LwomazhSyllable(
 
 object LwomazhSyllable {
    private final val PinyinSyllablicFricatives = Map(
-      ("zi", ("z", "zh", "zh")),
-      ("ci", ("ts", "zh", "tszh")),
-      ("si", ("s", "zh", "szh")),
-      ("zhi", ("j", "rh", "jh")),
-      ("chi", ("ch", "rh", "ch")),
-      ("shi", ("sh", "rh", "sh")),
-      ("ri", ("r", "rh", "rh"))
+      ("zi", ("z", "z")),
+      ("ci", ("ts", "z")),
+      ("si", ("s", "z")),
+      ("zhi", ("j", "r")),
+      ("chi", ("ch", "r")),
+      ("shi", ("sh", "r")),
+      ("ri", ("r", "r"))
    )
 
    private final val PinyinSyllablicNasals = Set("n", "ng")
@@ -153,14 +152,14 @@ object LwomazhSyllable {
       val syllable = input.substring(0, input.length - 1)
       val tone = input.substring(input.length - 1).toInt
 
-      PinyinSyllablicFricatives.get(syllable).map { case (initial, rime, full) =>
+      PinyinSyllablicFricatives.get(syllable).map { case (initial, rime) =>
          LwomazhSyllable(
             initial,
             initialPhoneme = Some(initial),
             cInitial = initial,
             rime,
             cRime = rime,
-            full,
+            full = if initial == rime then rime else initial + rime,
             tone,
          )
       }.orElse {
@@ -191,7 +190,7 @@ object LwomazhSyllable {
             val lwomazhFull = PinyinInitialsToLwomazhFull.getOrElse(initial, initial) +
                PinyinRimesToLwomazh.getOrElse(rime, rime)
 
-            val (cInitial, cRime) = if (lwomazhRime(0) == 'y' || lwomazhRime(1) == 'w') && lwomazhInitial == "" then
+            val (cInitial, cRime) = if (lwomazhRime(0) == 'y' || lwomazhRime(0) == 'w') && lwomazhInitial == "" then
                val glide = lwomazhRime.substring(0, 1)
                val rest = lwomazhRime.substring(1)
                (f"($glide)", f"($glide)$rest")
