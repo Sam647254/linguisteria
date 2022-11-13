@@ -1,5 +1,4 @@
 package blue.mrk.linguisteria
-package mc
 
 case class LwomazhSyllable(
    initial: String,

@@ -1,7 +1,6 @@
 package blue.mrk.linguisteria
-package mc
 
-import play.api.libs.json.{JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsString, Json}
+import play.api.libs.json.*
 
 import java.io.FileWriter
 import scala.io.Source

@@ -1,5 +1,4 @@
 package blue.mrk.linguisteria
-package mc
 
 import play.api.libs.json.{JsValue, Json, Writes}
 

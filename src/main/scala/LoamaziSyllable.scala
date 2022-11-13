@@ -1,4 +1,4 @@
-package blue.mrk.linguisteria.mc
+package blue.mrk.linguisteria
 
 case class LoamaziSyllable(
    initial: String,
