@@ -11,3 +11,4 @@ project/target
 .bsp/
 **/.idea/workspace.xml
 **/.idea/tasks.xml
+output/

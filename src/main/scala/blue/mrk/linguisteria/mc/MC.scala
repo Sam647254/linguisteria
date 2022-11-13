@@ -3,10 +3,11 @@ package mc
 
 import play.api.libs.json.{JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsString, Json}
 
+import java.io.FileWriter
 import scala.io.Source
 import scala.util.{Try, Using}
 
-object MC {
+object MC:
    private final val PinyinEntryRegex = "^([A-Z0-9]+) \\((.*)\\)$".r
    private final val CharRegex = "(\\p{sc=Han})".r
    private final val JyutpingRegex = "([a-z]+[0-9])".r
@@ -68,20 +69,31 @@ object MC {
 
    def createSyllableStats(chars: Seq[CharInfo]): SyllableStats =
       val mNoTones = chars.flatMap { c => c.mandarin.map((_, c.character)) }.groupMap(_._1.full)(_._2)
+         .map { case (syllable, chars) => (syllable, chars.distinct) }
       val mTones = chars.flatMap { c => c.mandarin.map((_, c.character)) }
          .groupMap { case (syllable, char) => syllable.full + syllable.tone }(_._2)
-      
+
       val cNoTones = chars.flatMap { c => c.cantonese.map((_, c.character)) }.groupMap(_._1.full)(_._2)
+         .map { case (syllable, chars) => (syllable, chars.distinct) }
       val cTones = chars.flatMap { c => c.cantonese.map((_, c.character)) }
          .groupMap { case (syllable, char) => syllable.full + syllable.tone }(_._2)
       SyllableStats(mNoTones, mTones, cNoTones, cTones)
 
    private def extractMonophones(chars: Seq[CharInfo]) =
       chars.filter { c => c.mandarin.length == 1 || c.cantonese.length == 1 }
-}
 
 @main def main(): Unit =
    val chars = MC.loadCharacters().get
    println(s"Loaded characters: ${chars.length}")
-   val syllableMapping = MC.createSyllableMapping(chars)
-   val toneMapping = MC.createToneMapping(chars)
+
+   Using(new FileWriter("output/syllables.json")) { writer =>
+      writer.write(Json.toJson(MC.createSyllableMapping(chars)).toString)
+   }.get
+
+   Using(new FileWriter("output/tones.json")) { writer =>
+      writer.write(Json.toJson(MC.createToneMapping(chars)).toString)
+   }.get
+
+   Using(new FileWriter("output/stats.json")) { writer =>
+      writer.write(Json.toJson(MC.createSyllableStats(chars)).toString)
+   }.get
