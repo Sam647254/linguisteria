@@ -1,5 +1,5 @@
-package mrk.blue.linguisteria
-package blue.mrk.linguisteria.mc
+package blue.mrk.linguisteria
+package mc
 
 import play.api.libs.json.{JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsString, Json}
 
@@ -39,13 +39,49 @@ object MC {
          CharInfo(tChar(0), mandarin, cantonese)
       }
 
-   def syllableMapping(chars: Seq[CharInfo]): Unit = ???
+   def createSyllableMapping(chars: Seq[CharInfo]): SyllableMapping =
+      val monophones = extractMonophones(chars)
 
-   def extractTones(): Unit = ???
+      val mcInitialMapping = monophones.groupMap(_.mandarin.head.initial)(identity)
+         .map { case (mInitial, cChars) => (mInitial, cChars.groupMap(_.cantonese.head.initial)(_.character)) }
+      val mcRimeMapping = monophones.groupMap(_.mandarin.head.rime)(identity)
+         .map { case (mInitial, cChars) => (mInitial, cChars.groupMap(_.cantonese.head.mRime)(_.character)) }
+      val cmInitialMapping = monophones.groupMap(_.cantonese.head.rime)(identity)
+         .map { case (mInitial, mChars) => (mInitial, mChars.groupMap(_.mandarin.head.cInitial)(_.character)) }
+      val cmRimeMapping = monophones.groupMap(_.cantonese.head.rime)(identity)
+         .map { case (mInitial, mChars) => (mInitial, mChars.groupMap(_.mandarin.head.cRime)(_.character)) }
 
-   def createSyllableStats(): Unit = ???
+      SyllableMapping(
+         mc = SyllablePartMapping(mcInitialMapping, mcRimeMapping),
+         cm = SyllablePartMapping(cmInitialMapping, cmRimeMapping),
+      )
+
+   def createToneMapping(chars: Seq[CharInfo]): ToneMapping =
+      val monophones = extractMonophones(chars)
+      val mc = monophones.groupMap(_.mandarin.head.tone)(_.cantonese.head.tone).map { case (mTone, cTones) =>
+         (mTone, cTones.groupMapReduce(identity)(_ => 1)(_ + _))
+      }
+      val cm = monophones.groupMap(_.cantonese.head.tone)(_.mandarin.head.tone).map { case (cTone, mTones) =>
+         (cTone, mTones.groupMapReduce(identity)(_ => 1)(_ + _))
+      }
+      ToneMapping(mc, cm)
+
+   def createSyllableStats(chars: Seq[CharInfo]): SyllableStats =
+      val mNoTones = chars.flatMap { c => c.mandarin.map((_, c.character)) }.groupMap(_._1.full)(_._2)
+      val mTones = chars.flatMap { c => c.mandarin.map((_, c.character)) }
+         .groupMap { case (syllable, char) => syllable.full + syllable.tone }(_._2)
+      
+      val cNoTones = chars.flatMap { c => c.cantonese.map((_, c.character)) }.groupMap(_._1.full)(_._2)
+      val cTones = chars.flatMap { c => c.cantonese.map((_, c.character)) }
+         .groupMap { case (syllable, char) => syllable.full + syllable.tone }(_._2)
+      SyllableStats(mNoTones, mTones, cNoTones, cTones)
+
+   private def extractMonophones(chars: Seq[CharInfo]) =
+      chars.filter { c => c.mandarin.length == 1 || c.cantonese.length == 1 }
 }
 
 @main def main(): Unit =
    val chars = MC.loadCharacters().get
    println(s"Loaded characters: ${chars.length}")
+   val syllableMapping = MC.createSyllableMapping(chars)
+   val toneMapping = MC.createToneMapping(chars)

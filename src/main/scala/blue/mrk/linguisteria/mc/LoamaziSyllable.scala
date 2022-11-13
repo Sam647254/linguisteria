@@ -1,14 +1,13 @@
-package mrk.blue.linguisteria
 package blue.mrk.linguisteria.mc
 
 case class LoamaziSyllable(
-                             initial: String,
-                             rime: String,
-                             mRime: String, // Used to mark that kwang is kw-ang in Cantonese, but k-wang in Mandarin
-                             finalPlosive: String,
-                             full: String,
-                             tone: Int
-                          )
+   initial: String,
+   rime: String,
+   mRime: String, // Used to mark that kwang is kw-ang in Cantonese, but k-wang in Mandarin
+   finalPlosive: String,
+   full: String,
+   tone: Int
+)
 
 object LoamaziSyllable {
    private final val JyutpingSyllableNasals = Set("m", "ng")
