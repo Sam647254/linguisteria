@@ -30,7 +30,7 @@ object MC:
             val json = Json.parse(file.mkString)
             json.as[JsObject].value.toSeq.flatMap { case (entry, jyutping) =>
                CharRegex.findAllIn(entry).zip(JyutpingRegex.findAllIn(jyutping.as[String]))
-            }.groupMap(_._1)(_._2)
+            }.groupMap(_._1)(_._2).map { case (char, jp) => (char, jp.distinct) }
          }
 
       yield tChars.map { case (tUnicode, tChar) =>
@@ -46,7 +46,7 @@ object MC:
          .map { case (mInitial, cChars) => (mInitial, cChars.groupMap(_.cantonese.head.initial)(_.character)) }
       val mcRimeMapping = monophones.groupMap(_.mandarin.head.rime)(identity)
          .map { case (mInitial, cChars) => (mInitial, cChars.groupMap(_.cantonese.head.mRime)(_.character)) }
-      val cmInitialMapping = monophones.groupMap(_.cantonese.head.rime)(identity)
+      val cmInitialMapping = monophones.groupMap(_.cantonese.head.initial)(identity)
          .map { case (mInitial, mChars) => (mInitial, mChars.groupMap(_.mandarin.head.cInitial)(_.character)) }
       val cmRimeMapping = monophones.groupMap(_.cantonese.head.rime)(identity)
          .map { case (mInitial, mChars) => (mInitial, mChars.groupMap(_.mandarin.head.cRime)(_.character)) }

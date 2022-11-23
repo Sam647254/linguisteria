@@ -179,13 +179,13 @@ object LoamaziSyllable {
             case ("ts/ch", false) => "ts"
             case ("z/j", true) => "j"
             case ("z/j", false) => "z"
-            case _ => initial
+            case _ => loamaziInitial
          val loamaziRime = JyutpingFinalsToLoamazi.getOrElse(rime, rime)
          val mRime = initial match
-            case "kw" | "gw" => "(w)" + rime
-            case "w" if rime != "u" => "(w)" + rime
-            case "j" if rime != "i" || rime != "yu" => "(y)" + rime
-            case _ => rime
+            case "kw" | "gw" => "(w)" + loamaziRime
+            case "w" if rime != "u" => "(w)" + loamaziRime
+            case "j" if rime != "i" || rime != "yu" => "(y)" + loamaziRime
+            case _ => loamaziRime
 
          LoamaziSyllable(
             initial = loamaziInitial,
