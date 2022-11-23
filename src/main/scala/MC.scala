@@ -35,19 +35,39 @@ object MC:
 
       yield tChars.map { case (tUnicode, tChar) =>
          val mandarin = pinyinDict(tUnicode.toUpperCase).map(LwomazhSyllable.parse(_).get)
-         val cantonese = jyutping(tChar).map { jp => LoamaziSyllable.parse(jp).getOrElse { throw IllegalArgumentException(jp) } }
+         val cantonese = jyutping(tChar).map { jp =>
+            LoamaziSyllable.parse(jp).getOrElse {
+               throw IllegalArgumentException(jp)
+            }
+         }
          CharInfo(tChar(0), mandarin, cantonese)
       }
 
    def createSyllableMapping(chars: Seq[CharInfo]): SyllableMapping =
       val monophones = extractMonophones(chars)
 
-      val mcInitialMapping = monophones.groupMap(_.mandarin.head.initial)(identity)
-         .map { case (mInitial, cChars) => (mInitial, cChars.groupMap(_.cantonese.head.initial)(_.character)) }
+      val mcInitialMapping = monophones.groupMap { char =>
+         val initial = char.mandarin.head.initialWithGlide
+         if initial.isEmpty then "(none)" else initial
+      }(identity)
+         .map { case (mInitial, cChars) =>
+            (mInitial, cChars.groupMap { char =>
+               val initial = char.cantonese.head.initial
+               if initial.isEmpty then "(none)" else initial
+            }(_.character))
+         }
       val mcRimeMapping = monophones.groupMap(_.mandarin.head.rime)(identity)
          .map { case (mInitial, cChars) => (mInitial, cChars.groupMap(_.cantonese.head.mRime)(_.character)) }
-      val cmInitialMapping = monophones.groupMap(_.cantonese.head.initial)(identity)
-         .map { case (mInitial, mChars) => (mInitial, mChars.groupMap(_.mandarin.head.cInitial)(_.character)) }
+      val cmInitialMapping = monophones.groupMap { char =>
+         val initial = char.cantonese.head.initial
+         if initial.isEmpty then "(none)" else initial
+      }(identity)
+         .map { case (mInitial, mChars) =>
+            (mInitial, mChars.groupMap { char =>
+               val initial = char.mandarin.head.cInitial
+               if initial.isEmpty then "(none)" else initial
+            }(_.character))
+         }
       val cmRimeMapping = monophones.groupMap(_.cantonese.head.rime)(identity)
          .map { case (mInitial, mChars) => (mInitial, mChars.groupMap(_.mandarin.head.cRime)(_.character)) }
 

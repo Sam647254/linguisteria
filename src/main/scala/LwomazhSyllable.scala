@@ -1,14 +1,15 @@
 package blue.mrk.linguisteria
 
 case class LwomazhSyllable(
-   initial: String,
-   initialPhoneme: Option[String],
-   cInitial: String,
-   rime: String,
-   cRime: String,
-   full: String,
-   tone: Int
-)
+                             initial: String,
+                             initialWithGlide: String,
+                             initialPhoneme: Option[String],
+                             cInitial: String,
+                             rime: String,
+                             cRime: String,
+                             full: String,
+                             tone: Int
+                          )
 
 object LwomazhSyllable {
    private final val PinyinSyllablicFricatives = Map(
@@ -154,6 +155,7 @@ object LwomazhSyllable {
       PinyinSyllablicFricatives.get(syllable).map { case (initial, rime) =>
          LwomazhSyllable(
             initial,
+            initialWithGlide = initial,
             initialPhoneme = Some(initial),
             cInitial = initial,
             rime,
@@ -165,6 +167,7 @@ object LwomazhSyllable {
          if PinyinSyllablicNasals.contains(syllable) then
             Some(LwomazhSyllable(
                initial = syllable,
+               initialWithGlide = syllable,
                initialPhoneme = Some(syllable),
                cInitial = syllable,
                rime = syllable + "h",
@@ -202,8 +205,21 @@ object LwomazhSyllable {
                case "i" => ("(y)", "i")
                case _ => (lwomazhInitial, lwomazhRime)
 
+            val initialWithGlide = if lwomazhInitial.isEmpty then
+               if lwomazhRime.startsWith("eu") || lwomazhRime.startsWith("yu") then "(yu)"
+               else if lwomazhRime(0) == 'y' || lwomazhRime(0) == 'w' then
+                  val glide = lwomazhRime.substring(0, 1)
+                  f"($glide)"
+               else if lwomazhRime(0) == 'i' then "(y)"
+               else if lwomazhRime(0) == 'u' then "(w)"
+               else
+                  lwomazhInitial
+            else
+               lwomazhInitial
+
             LwomazhSyllable(
                lwomazhInitial,
+               initialWithGlide,
                PinyinInitialsToLwomazhPhoneme.get(initial),
                cInitial,
                lwomazhRime,
